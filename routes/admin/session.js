@@ -1,0 +1,89 @@
+var express = require('express');
+var router = express.Router();
+var Adminuser = require('../../model/admin/user')
+var Adminsession = require('../../model/admin/session')
+var Adminmessage = require('../../model/admin/message')
+router.get('/sessions',(req,res,next)=>{
+    const {username} =req.query
+    if(!username){
+        res.json({
+            message:"请传递正确参数",
+            cannot:true
+        })
+        return;
+    }
+    Adminuser.queryadminSession(username).then(sessiontable=>{
+        if(sessiontable){
+            Adminsession.queryadminSession(sessiontable.sessions).then(sessionlists=>{
+                //console.log(sessionlists)
+                res.json({
+                    message:"会话获取成功",
+                    sessionlists,
+                    cannot:false
+                })
+            }).catch(error=>{
+                console.log('获取管理员用户会话列表失败')
+                console.log(error)
+                res.json({
+                    message:"会话获取失败",
+                    cannot:true
+                })
+            })
+        }else{
+            res.json({
+                message:"会话获取失败",
+                cannot:true
+            })
+        }
+    }).catch(error=>{
+        console.log('获取管理员用户会话表失败')
+        console.log(error)
+        res.json({
+            message:"会话获取失败",
+            cannot:true
+        })
+    })
+})
+router.get('/messages',(req,res,next)=>{
+    const {type,targetid,targetname,username} = req.query;
+    Adminuser.queryadminSession(username).then(sessiontable=>{
+        if(sessiontable){
+            Adminsession.queryadminMessage(targetname,sessiontable.sessions,type).then(messagetable=>{
+                if(messagetable){
+                    Adminmessage.queryadminMessage(messagetable.messages).then(messagelists=>{
+                        res.json({
+                            message:"消息列表获取成功",
+                            cannot:false,
+                            messagelists                            
+                        })
+                    }).catch(error=>{
+                        console.log("消息列表获取失败")
+                        console.log(error)
+                        res.json({
+                            message:"消息表获取失败",
+                            cannot:true
+                        })    
+                    })
+                }else{
+                    res.json({
+                        message:"消息表获取失败",
+                        cannot:true
+                    })
+                }
+            })
+        }else{
+            res.json({
+                message:"会话获取失败",
+                cannot:true
+            })
+        }
+    }).catch(error=>{
+        console.log('获取管理员用户会话表失败')
+        console.log(error)
+        res.json({
+            message:"会话获取失败",
+            cannot:true
+        })
+    })
+})
+module.exports=router;
